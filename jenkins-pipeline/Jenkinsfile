@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        AWS_ACCOUNT_ID = 'YOUR_ACCOUNT_ID'
+        AWS_ACCOUNT_ID = '768754110826'
         AWS_REGION = 'us-east-1'
         ECR_REPO = 'nodejs-eks-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YOUR_USER/nodejs-eks-app.git'
+                git branch: 'main', url: 'https://github.com/mayur4143/nodejs-eks-app.git'
             }
         }
         stage('Docker Build & Push') {
