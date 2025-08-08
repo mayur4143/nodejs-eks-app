@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCOUNT_ID = 'YOUR_ACCOUNT_ID'
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = 'nodejs-eks-app'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/YOUR_USER/nodejs-eks-app.git'
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                sh '''
+                aws ecr create-repository --repository-name $ECR_REPO || true
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                docker build -t $ECR_REPO:$IMAGE_TAG nodejs-app/
+                docker tag $ECR_REPO:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                sed -i "s|<AWS_ACCOUNT_ID>|$AWS_ACCOUNT_ID|g" nodejs-app/k8s-deployment.yaml
+                kubectl apply -f nodejs-app/k8s-deployment.yaml
+                '''
+            }
+        }
+    }
+}
